@@ -1,0 +1,19 @@
+operator right custom fibonacci' count
+  skipif' count 'neq' 0;
+  return' 0;
+
+  skipif' count 'gt' 2;
+  return' 1;
+  
+  return' (fibonacci' (count 'sub' 1)) 'add' (fibonacci' (count 'sub' 2));
+end
+
+count 'is' 4;
+hack 'is' $here;
+display' count;
+count 'is' count 'sub' 1;
+skipif' count 'eq' 0;
+goto' hack;
+
+
+display' fibonacci' 7;
