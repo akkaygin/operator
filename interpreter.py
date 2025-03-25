@@ -1,5 +1,6 @@
 import os, sys
 import re
+import math
 
 from dataclasses import dataclass
 
@@ -60,9 +61,10 @@ builtin_operators = {
   "'div'": BuiltinOperator(OPERATOR_PRECEDENCE["FACTOR"], SIDE["LEFT"], SIDE["BOTH"], "lhs / rhs"),
   "'over'": BuiltinOperator(OPERATOR_PRECEDENCE["FACTOR"], SIDE["LEFT"], SIDE["BOTH"], "lhs / rhs"),
   "'pow'": BuiltinOperator(OPERATOR_PRECEDENCE["FACTOR"] + 10, SIDE["RIGHT"], SIDE["BOTH"], "lhs ** rhs"),
+  "sqrt'": BuiltinOperator(OPERATOR_PRECEDENCE["FACTOR"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.sqrt(rhs)"),
   "not'": BuiltinOperator(OPERATOR_PRECEDENCE["UNARY"], SIDE["LEFT"], SIDE["RIGHT"], "float(-1 ^ int(rhs))"),
   "neg'": BuiltinOperator(OPERATOR_PRECEDENCE["UNARY"], SIDE["LEFT"], SIDE["RIGHT"], "-rhs"),
-  "display'": BuiltinOperator(OPERATOR_PRECEDENCE["NONE"] + 50, SIDE["RIGHT"], SIDE["RIGHT"], "print(rhs)"),
+  "display'": BuiltinOperator(OPERATOR_PRECEDENCE["NONE"] + 50, SIDE["RIGHT"], SIDE["RIGHT"], "print(\"%.2f\" % rhs)"),
   # psuedo operators
   "'is'": BuiltinOperator(OPERATOR_PRECEDENCE["ASSIGNMENT"], SIDE["RIGHT"], SIDE["BOTH"], None),
   "skipif'": BuiltinOperator(OPERATOR_PRECEDENCE["ASSIGNMENT"] + 50, SIDE["RIGHT"], SIDE["RIGHT"], None),
@@ -93,9 +95,6 @@ class Token:
 TOKEN_PATTERNS = {
   "NUMBER": r"\d+",
   "OPERATOR": r"'?[a-zA-Z_][a-zA-Z0-9_]*'?",
-  "LPAREN": r"\(",
-  "RPAREN": r"\)",
-  "COLON": r":",
   "MACRO": r"\$[a-zA-Z_][a-zA-Z0-9_]*",
 }
 
@@ -105,6 +104,10 @@ TOKEN_REGEX = re.compile(
   f'(?P<OPERATOR>{TOKEN_PATTERNS["OPERATOR"]})|'
   f'(?P<LPAREN>\()|'
   f'(?P<RPAREN>\))|'
+  f'(?P<LBRACK>\[)|'
+  f'(?P<RBRACK>\])|'
+  f'(?P<COMMA>,)|'
+  f'(?P<DOT>\.)|'
   f'(?P<COLON>:)|'
   f'(?P<SEMICOLON>;)'
 )
@@ -220,7 +223,6 @@ class Interpreter():
         exit(rhs)
       self.scope_stack[-1].return_value = rhs
       self.scope_stack[-1].return_now = True
-      print(f"[d] {self.scope_stack[-1].identifier} returned {rhs}")
       return 0.0
     elif identifier == "skipif'":
       if rhs >= 1.0:
@@ -244,55 +246,91 @@ class Interpreter():
   
   def parse_prefix(self):
     if self.optional("NUMBER"):
-      return float(self.get_consumed_token().value)
+      integer = self.get_consumed_token().value
+      if self.optional("DOT"):
+        self.expect("NUMBER")
+        return float(integer + '.' + self.get_consumed_token().value)
+      else:
+        return float(integer)
     elif self.optional("IDENTIFIER"):
       identifier = self.get_consumed_token().value
       dict_refecence = self.lookup_variable(identifier)
+      index = None
+      if self.optional("LBRACK"):
+        index = int(self.parse_expression(OPERATOR_PRECEDENCE["NONE"]))
+        self.expect("RBRACK")
       
       if self.optional("KEYWORD_IS"):
         rhs = self.parse_expression(OPERATOR_PRECEDENCE["NONE"])
         if dict_refecence is None:
-          self.scope_stack[-1].variables[identifier] = rhs
+          if index is not None:
+            self.scope_stack[-1].variables[identifier][index] = rhs
+          else:
+            self.scope_stack[-1].variables[identifier] = rhs
         else:
-          dict_refecence[identifier] = rhs
+          if index is not None:
+            dict_refecence[identifier][index] = rhs
+          else:
+            dict_refecence[identifier] = rhs
         return rhs
       elif dict_refecence is not None:
+        if index is not None:
+          return dict_refecence[identifier][index]
         return dict_refecence[identifier]
       self.print_call_stack()
       print(f"Undefined variable \"{self.get_consumed_token().value}\" referenced at line {self.get_consumed_token().line}.")
       exit(1)
+    elif self.optional("LBRACK"):
+      array = []
+      while not self.optional("RBRACK"):
+        array.append(self.parse_expression(OPERATOR_PRECEDENCE["NONE"]))
+        if not self.optional("COMMA"):
+          self.expect("RBRACK")
+          break
+      return array
     elif self.optional("LPAREN"):
       expression_value = self.parse_expression(OPERATOR_PRECEDENCE["NONE"])
       self.expect("RPAREN")
       return expression_value
-    elif self.optional("OPERATOR"):
-      operator = None
-      operator_identifier = self.get_consumed_token().value
-      user_operator = False
-      if operator_identifier in self.user_operators:
-        operator = self.user_operators[operator_identifier]
-        user_operator = True
-      elif operator_identifier in builtin_operators:
-        operator = builtin_operators[operator_identifier]
-      else:
-        self.print_call_stack()
-        print(f"Undefined operator {operator_identifier} referenced in line {self.get_consumed_token().line}")
-        exit(1)
+    elif self.get_next_token().type == "OPERATOR":
+      while self.get_next_token().type == "OPERATOR":
+        operator = None
+        operator_identifier = self.get_next_token().value
+        user_operator = False
+        if operator_identifier in self.user_operators:
+          operator = self.user_operators[operator_identifier]
+          user_operator = True
+        elif operator_identifier in builtin_operators:
+          operator = builtin_operators[operator_identifier]
+        else:
+          self.print_call_stack()
+          print(f"Undefined operator {operator_identifier} referenced in line {self.get_next_token().line}")
+          exit(1)
+        
+        if not user_operator and operator.side != SIDE["RIGHT"]:
+          self.print_call_stack()
+          print(f"Unexpected two operand operator {operator_identifier} at line {self.get_next_token().line}.")
+          exit(1)
+        elif user_operator and operator.lhs_identifier is not None:
+          self.print_call_stack()
+          print(f"Unexpected two operand operator {operator_identifier} at line {self.get_next_token().line}.")
+          exit(1)
 
-      next_precedence = operator.precedence + operator.associativity
-      rhs = self.parse_expression(next_precedence)
+        self.expect("OPERATOR")
+        next_precedence = operator.precedence + operator.associativity
+        rhs = self.parse_expression(next_precedence)
 
-      if user_operator:
-        parameter_dict = { operator.rhs_identifier: rhs }
-        self.scope_stack.append(Scope(operator_identifier, parameter_dict, None, operator.first_token_index))
-        self.parse_program()
-        lhs = self.scope_stack[-1].return_value
-        self.scope_stack.pop()
-        return lhs
-      elif operator.function_body is None:
-        return self.execute_psuedo_operator(operator_identifier, None, rhs)
-      else:
-        return operator.function(None, rhs)
+        if user_operator:
+          parameter_dict = { operator.rhs_identifier: rhs }
+          self.scope_stack.append(Scope(operator_identifier, parameter_dict, None, operator.first_token_index))
+          self.parse_program()
+          lhs = self.scope_stack[-1].return_value
+          self.scope_stack.pop()
+          return lhs
+        elif operator.function_body is None:
+          return self.execute_psuedo_operator(operator_identifier, None, rhs)
+        else:
+          return operator.function(None, rhs)
     else:
       self.print_call_stack()
       print(f"Unexpected token {self.get_consumed_token().type} at line {self.get_consumed_token().line}.")
@@ -301,9 +339,9 @@ class Interpreter():
   def parse_expression(self, precedence):
     lhs = self.parse_prefix()
 
-    if self.optional("OPERATOR"):
+    while self.get_next_token().type == "OPERATOR":
       operator = None
-      operator_identifier = self.get_consumed_token().value
+      operator_identifier = self.get_next_token().value
       user_operator = False
       if operator_identifier in self.user_operators:
         operator = self.user_operators[operator_identifier]
@@ -312,12 +350,13 @@ class Interpreter():
         operator = builtin_operators[operator_identifier]
       else:
         self.print_call_stack()
-        print(f"Undefined operator {operator_identifier} referenced in line {self.get_consumed_token().line}")
+        print(f"Undefined operator {operator_identifier} referenced in line {self.get_next_token().line}")
         exit(1)
 
       if operator.precedence < precedence:
         return lhs
 
+      self.expect("OPERATOR")
       next_precedence = operator.precedence + operator.associativity
       rhs = self.parse_expression(next_precedence)
 
@@ -395,15 +434,11 @@ class Interpreter():
         if not self.scope_stack[-1].gotod:
           self.expect("SEMICOLON")
         self.scope_stack[-1].gotod = False
-      print(f"[d] function {self.scope_stack[-1].identifier} returned {self.scope_stack[-1].return_value}")
 
   def interpret_file(self, file_name):
     self.tokenize(open(file_name, "r").read())
-    print(self.tokens)
     self.scope_stack.append(Scope("root", {}, None, 0))
-
     self.scope_stack[-1].return_now = False
-
     while self.get_next_token().type != "EOF":
       self.parse_program()
 

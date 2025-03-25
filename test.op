@@ -1,19 +1,52 @@
-operator right custom fibonacci' count
+operator right custom a 'dot' b
+  return' (a[0] 'times' b[0]) 'plus' (a[1] 'times' b[1]);
+end
+
+display' [1, 2] 'dot' [2, 5];
+
+operator right custom rec_fibonacci' count
+  skipif' count 'gt' 1;
+  return' count;
+  return' (rec_fibonacci' count 'minus' 1) 'plus' (rec_fibonacci' count 'minus' 2);
+end
+
+display' rec_fibonacci' 6;
+
+operator right custom gr_fibonacci' count
+  phi 'is' (1 'plus' sqrt' 5) 'over' 2;
+  psi 'is' 1 'minus' phi;
+  return' ((phi 'pow' count) 'minus' (psi 'pow' count)) 'over' sqrt' 5;
+end
+
+display' gr_fibonacci' 7;
+
+operator right custom loop_fibonacci' count
   skipif' count 'neq' 0;
   return' 0;
 
   skipif' count 'gt' 2;
   return' 1;
-  
-  return' (fibonacci' (count 'sub' 1)) 'add' (fibonacci' (count 'sub' 2));
+
+  t1 'is' 0;
+  t2 'is' 1;
+  next 'is' t1 'plus' t2;
+  counter 'is' 1;
+  loop1_loop_fibonacci 'is' $here;
+    counter 'is' counter 'plus' 1;
+    next 'is' t1 'plus' t2;
+    t1 'is' t2;
+    t2 'is' next;
+  skipif' counter 'eq' count;
+  goto' loop1_loop_fibonacci;
+
+  return' t2;
 end
 
-count 'is' 4;
-hack 'is' $here;
-display' count;
-count 'is' count 'sub' 1;
-skipif' count 'eq' 0;
-goto' hack;
+counter 'is' 0;
+loop1_root 'is' $here;
+  display' loop_fibonacci' counter;
+  counter 'is' counter 'plus' 1;
+skipif' counter 'eq' 9;
+goto' loop1_root;
 
-
-display' fibonacci' 7;
+return' 0;
