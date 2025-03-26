@@ -42,11 +42,4 @@ operator right custom loop_fibonacci' count
   return' t2;
 end
 
-counter 'is' 0;
-loop1_root 'is' $here;
-  display' loop_fibonacci' counter;
-  counter 'is' counter 'plus' 1;
-skipif' counter 'eq' 9;
-goto' loop1_root;
-
-return' 0;
+display' loop_fibonacci' 8;
