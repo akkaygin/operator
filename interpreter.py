@@ -48,10 +48,12 @@ builtin_operators = {
   "'greaterthan'": BuiltinOperator(OPERATOR_PRECEDENCE["COMPARISON"], SIDE["LEFT"], SIDE["BOTH"], "float(lhs > rhs)"),
   "'ge'": BuiltinOperator(OPERATOR_PRECEDENCE["COMPARISON"], SIDE["LEFT"], SIDE["BOTH"], "float(lhs >= rhs)"),
   "'greaterequal'": BuiltinOperator(OPERATOR_PRECEDENCE["COMPARISON"], SIDE["LEFT"], SIDE["BOTH"], "float(lhs >= rhs)"),
+  
   "'and'": BuiltinOperator(OPERATOR_PRECEDENCE["LOGICAL"], SIDE["LEFT"], SIDE["BOTH"], "float(int(lhs) & int(rhs))"),
   "'nand'": BuiltinOperator(OPERATOR_PRECEDENCE["LOGICAL"], SIDE["LEFT"], SIDE["BOTH"], "~(lhs & rhs)"),
   "'or'": BuiltinOperator(OPERATOR_PRECEDENCE["LOGICAL"], SIDE["LEFT"], SIDE["BOTH"], "float(int(lhs) | int(rhs))"),
   "'xor'": BuiltinOperator(OPERATOR_PRECEDENCE["LOGICAL"], SIDE["LEFT"], SIDE["BOTH"], "float(int(lhs) ^ int(rhs))"),
+  
   "'add'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"], SIDE["LEFT"], SIDE["BOTH"], "lhs + rhs"),
   "'plus'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"], SIDE["LEFT"], SIDE["BOTH"], "lhs + rhs"),
   "'sub'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"], SIDE["LEFT"], SIDE["BOTH"], "lhs - rhs"),
@@ -62,9 +64,22 @@ builtin_operators = {
   "'over'": BuiltinOperator(OPERATOR_PRECEDENCE["FACTOR"], SIDE["LEFT"], SIDE["BOTH"], "lhs / rhs"),
   "'pow'": BuiltinOperator(OPERATOR_PRECEDENCE["FACTOR"] + 10, SIDE["RIGHT"], SIDE["BOTH"], "lhs ** rhs"),
   "sqrt'": BuiltinOperator(OPERATOR_PRECEDENCE["FACTOR"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.sqrt(rhs)"),
+  
   "not'": BuiltinOperator(OPERATOR_PRECEDENCE["UNARY"], SIDE["LEFT"], SIDE["RIGHT"], "float(-1 ^ int(rhs))"),
   "neg'": BuiltinOperator(OPERATOR_PRECEDENCE["UNARY"], SIDE["LEFT"], SIDE["RIGHT"], "-rhs"),
+  
+  "cos'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.cos(rhs)"),
+  "sin'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.sin(rhs)"),
+  "tan'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.tan(rhs)"),
+  "acos'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.acos(rhs)"),
+  "asin'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.asin(rhs)"),
+  "atan'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.atan(rhs)"),
+
+  "ceil'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.ceil(rhs)"),
+  "floor'": BuiltinOperator(OPERATOR_PRECEDENCE["TERM"] + 10, SIDE["RIGHT"], SIDE["RIGHT"], "math.floor(rhs)"),
+  
   "display'": BuiltinOperator(OPERATOR_PRECEDENCE["NONE"] + 50, SIDE["RIGHT"], SIDE["RIGHT"], "print(\"%.2f\" % rhs)"),
+  
   # psuedo operators
   "'is'": BuiltinOperator(OPERATOR_PRECEDENCE["ASSIGNMENT"], SIDE["RIGHT"], SIDE["BOTH"], None),
   "skipif'": BuiltinOperator(OPERATOR_PRECEDENCE["ASSIGNMENT"] + 50, SIDE["RIGHT"], SIDE["RIGHT"], None),
