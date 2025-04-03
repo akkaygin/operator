@@ -457,5 +457,7 @@ class Interpreter():
     while self.get_next_token().type != "EOF":
       self.parse_program()
 
-repli = Interpreter()
-repli.interpret_file("test.op")
+if __name__ == "__main__":
+  interpreter = Interpreter()
+  interpreter.interpret_file(sys.argv[1])
+  exit(interpreter.return_value)
