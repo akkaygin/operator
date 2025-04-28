@@ -117,14 +117,14 @@ TOKEN_REGEX = re.compile(
   f'(?P<MACRO>{TOKEN_PATTERNS["MACRO"]})|'
   f'(?P<NUMBER>{TOKEN_PATTERNS["NUMBER"]})|'
   f'(?P<OPERATOR>{TOKEN_PATTERNS["OPERATOR"]})|'
-  f'(?P<LPAREN>\()|'
-  f'(?P<RPAREN>\))|'
-  f'(?P<LBRACK>\[)|'
-  f'(?P<RBRACK>\])|'
-  f'(?P<COMMA>,)|'
-  f'(?P<DOT>\.)|'
-  f'(?P<COLON>:)|'
-  f'(?P<SEMICOLON>;)'
+  r'(?P<LPAREN>\()|'
+  r'(?P<RPAREN>\))|'
+  r'(?P<LBRACK>\[)|'
+  r'(?P<RBRACK>\])|'
+  r'(?P<COMMA>,)|'
+  r'(?P<DOT>\.)|'
+  r'(?P<COLON>:)|'
+  r'(?P<SEMICOLON>;)'
 )
 
 @dataclass
